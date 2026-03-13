@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Athlete Report Editor</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:-apple-system,sans-serif;background:#f3f4f6;padding-bottom:80px;}
+h1{background:#111827;color:#fff;padding:16px;font-size:18px;}
+h1 span{display:block;font-size:12px;color:#9ca3af;font-weight:400;margin-top:2px;}
+.card{background:#fff;margin:12px;border-radius:10px;padding:16px;border:1px solid #e5e7eb;}
+.card h2{font-size:11px;color:#9ca3af;text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;}
+label{display:block;font-size:13px;font-weight:600;color:#374151;margin-bottom:4px;margin-top:10px;}
+input[type=text],input[type=date],textarea{
+  display:block;width:100%;padding:12px;font-size:16px;
+  border:1.5px solid #d1d5db;border-radius:8px;
+  background:#fff;color:#000;font-family:-apple-system,sans-serif;
+  -webkit-appearance:none;outline:none;
+}
+textarea{min-height:120px;resize:vertical;}
+input:focus,textarea:focus{border-color:#6366f1;}
+table{width:100%;border-collapse:collapse;margin-top:8px;}
+th{background:#f9fafb;padding:8px 4px;font-size:11px;border:1px solid #e5e7eb;text-align:center;}
+th:first-child{text-align:left;}
+td{padding:4px;border:1px solid #e5e7eb;}
+td input{
+  width:100%;padding:10px 4px;font-size:16px;text-align:center;
+  border:1px solid #e5e7eb;border-radius:6px;
+  background:#fff;color:#000;
+  -webkit-appearance:none;outline:none;font-family:-apple-system,sans-serif;
+}
+td:first-child input{text-align:left;font-size:14px;}
+.pis{color:#ef4444;}.pss{color:#3b82f6;}.ras{color:#10b981;}.cpts{color:#f59e0b;}
+.btns{display:flex;gap:8px;margin-top:12px;}
+.badd{flex:1;padding:14px;background:#111827;color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700;}
+.brem{flex:1;padding:14px;background:#e5e7eb;color:#374151;border:none;border-radius:10px;font-size:15px;font-weight:700;}
+.footer{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid #e5e7eb;padding:10px 12px;}
+.bexp{width:100%;padding:15px;background:#6366f1;color:#fff;border:none;border-radius:12px;font-size:16px;font-weight:700;}
+.bexp:disabled{background:#a5b4fc;}
+.toast{position:fixed;top:20px;left:50%;transform:translateX(-50%);padding:12px 20px;border-radius:10px;font-size:14px;font-weight:600;opacity:0;transition:opacity 0.3s;z-index:999;pointer-events:none;white-space:nowrap;color:#fff;}
+.toast.show{opacity:1;}
+.toast.ok{background:#16a34a;}
+.toast.err{background:#dc2626;}
+.toast.info{background:#111827;}
+</style>
+</head>
+<body>
+
+<h1>⚙️ Athlete Report Editor<span>Edit below — tap Publish to update the client report instantly</span></h1>
+
+<div class="card">
+  <h2>Athlete Details</h2>
+  <label>Athlete Name</label>
+  <input type="text" id="f_name" placeholder="e.g. John Doe" autocorrect="off" spellcheck="false"/>
+  <label>Team</label>
+  <input type="text" id="f_team" placeholder="e.g. Team Alpha" autocorrect="off" spellcheck="false"/>
+  <label>Coach Name</label>
+  <input type="text" id="f_coach" placeholder="e.g. Coach Smith" autocorrect="off" spellcheck="false"/>
+  <label>Report Date</label>
+  <input type="date" id="f_date"/>
+</div>
+
+<div class="card">
+  <h2>Score Data (0–100, lower is better)</h2>
+  <div style="overflow-x:auto;">
+    <table>
+      <thead>
+        <tr>
+          <th style="min-width:90px;text-align:left;">Period</th>
+          <th class="pis">PIS</th>
+          <th class="pss">PSS</th>
+          <th class="ras">RAS</th>
+          <th class="cpts">CPTS</th>
+        </tr>
+      </thead>
+      <tbody id="tbl"></tbody>
+    </table>
+  </div>
+  <div class="btns">
+    <button class="badd" id="btnAdd">+ Add Period</button>
+    <button class="brem" id="btnRem">− Remove</button>
+  </div>
+</div>
+
+<div class="card">
+  <h2>Conclusions</h2>
+  <textarea id="f_conc" placeholder="Write your conclusions here..."></textarea>
+</div>
+
+<div class="footer">
+  <button class="bexp" id="btnExp">🚀 Publish to Client Report</button>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+var GITHUB_TOKEN = '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';
+var GITHUB_USER  = 'athleteperformancereport';
+var GITHUB_REPO  = 'athlete-report';
+var GITHUB_FILE  = 'index.html';
+var GITHUB_BRANCH= 'main';
+
+var rows = [
+  {month:'Month 1',PIS:72,PSS:65,RAS:58,CPTS:60},
+  {month:'Month 2',PIS:68,PSS:68,RAS:63,CPTS:62},
+  {month:'Month 3',PIS:63,PSS:74,RAS:70,CPTS:67},
+  {month:'Month 4',PIS:58,PSS:78,RAS:75,CPTS:73},
+  {month:'Month 5',PIS:52,PSS:82,RAS:80,CPTS:79},
+  {month:'Month 6',PIS:47,PSS:87,RAS:85,CPTS:84}
+];
+
+function showToast(msg, type){
+  var t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show ' + (type||'info');
+  setTimeout(function(){t.className='toast';}, 3500);
+}
+
+function save(){
+  try{
+    localStorage.setItem('rpt', JSON.stringify({
+      name:  document.getElementById('f_name').value,
+      team:  document.getElementById('f_team').value,
+      coach: document.getElementById('f_coach').value,
+      date:  document.getElementById('f_date').value,
+      conc:  document.getElementById('f_conc').value,
+      rows:  rows
+    }));
+  }catch(e){}
+}
+
+function load(){
+  try{
+    var s = localStorage.getItem('rpt');
+    if(s){
+      var d = JSON.parse(s);
+      document.getElementById('f_name').value  = d.name  || '';
+      document.getElementById('f_team').value  = d.team  || '';
+      document.getElementById('f_coach').value = d.coach || '';
+      document.getElementById('f_date').value  = d.date  || '';
+      document.getElementById('f_conc').value  = d.conc  || '';
+      if(d.rows && d.rows.length) rows = d.rows;
+    }
+  }catch(e){}
+  renderTable();
+}
+
+function renderTable(){
+  var tb = document.getElementById('tbl');
+  tb.innerHTML = '';
+  for(var i = 0; i < rows.length; i++){
+    (function(idx){
+      var tr = document.createElement('tr');
+      var keys = ['month','PIS','PSS','RAS','CPTS'];
+      for(var j = 0; j < keys.length; j++){
+        (function(key){
+          var td  = document.createElement('td');
+          var inp = document.createElement('input');
+          if(key === 'month'){
+            inp.type = 'text';
+            inp.setAttribute('inputmode','text');
+            inp.setAttribute('autocorrect','off');
+            inp.setAttribute('spellcheck','false');
+            inp.style.textAlign = 'left';
+          } else {
+            inp.type = 'number';
+            inp.setAttribute('inputmode','numeric');
+            inp.min = '0'; inp.max = '100';
+          }
+          inp.value = rows[idx][key];
+          inp.addEventListener('change', function(){
+            if(key === 'month'){
+              rows[idx][key] = this.value;
+            } else {
+              var v = parseInt(this.value, 10);
+              if(isNaN(v)) v = 0;
+              if(v < 0) v = 0;
+              if(v > 100) v = 100;
+              rows[idx][key] = v;
+              this.value = v;
+            }
+            save();
+          });
+          td.appendChild(inp);
+          tr.appendChild(td);
+        })(keys[j]);
+      }
+      tb.appendChild(tr);
+    })(i);
+  }
+}
+
+document.getElementById('btnAdd').addEventListener('click', function(){
+  rows.push({month:'Month '+(rows.length+1),PIS:50,PSS:50,RAS:50,CPTS:50});
+  renderTable(); save();
+  showToast('Period added!', 'ok');
+});
+
+document.getElementById('btnRem').addEventListener('click', function(){
+  if(rows.length > 1){ rows.pop(); renderTable(); save(); showToast('Period removed!', 'info'); }
+});
+
+['f_name','f_team','f_coach','f_date','f_conc'].forEach(function(id){
+  document.getElementById(id).addEventListener('input', save);
+});
+
+function buildHTML(){
+  var name  = document.getElementById('f_name').value  || 'Athlete Name';
+  var team  = document.getElementById('f_team').value  || 'Team';
+  var coach = document.getElementById('f_coach').value || 'Coach Name';
+  var conc  = document.getElementById('f_conc').value  || '';
+  var dval  = document.getElementById('f_date').value;
+  var dateStr = dval
+    ? new Date(dval+'T00:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'})
+    : new Date().toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'});
+
+  var C  = {PIS:'#ef4444',PSS:'#3b82f6',RAS:'#10b981',CPTS:'#f59e0b'};
+  var ML = {PIS:'Performance Interference Score',PSS:'Pressure Stability Score',RAS:'Role Alignment Score',CPTS:'Coach Performance Trust Score'};
+  var MD = {PIS:'Measures subconscious interference during a game. Lower is better.',PSS:'Measures pressure, mistakes, and turnovers. Lower is better.',RAS:'Measures misalignment with role assessment. Lower is better.',CPTS:'Measures coach concern about athlete under pressure. Lower is better.'};
+  var M  = ['PIS','PSS','RAS','CPTS'];
+
+  var cards = M.map(function(k){
+    var vals = rows.map(function(r){return r[k];});
+    var last = vals[vals.length-1];
+    var diff = last - vals[0];
+    return '<div class="mc" id="c-'+k+'" onclick="tog(\''+k+'\')" style="border-color:'+C[k]+'">'
+      +'<div style="font-size:11px;font-weight:700;color:'+C[k]+';margin-bottom:4px;">'+k+'</div>'
+      +'<div style="font-size:26px;font-weight:700;color:#111827;">'+last+'</div>'
+      +'<div style="font-size:12px;font-weight:600;color:'+(diff<0?'#16a34a':'#dc2626')+';">'+(diff>=0?'▲':'▼')+' '+Math.abs(diff)+' pts</div>'
+      +'</div>';
+  }).join('');
+
+  var trows = rows.map(function(r){
+    return '<tr><td style="padding:10px;border:1px solid #e5e7eb;font-weight:600;">'+r.month+'</td>'
+      +M.map(function(k){return '<td style="padding:10px;border:1px solid #e5e7eb;text-align:center;font-weight:600;color:'+C[k]+';">'+r[k]+'</td>';}).join('')
+      +'</tr>';
+  }).join('');
+
+  var descs = M.map(function(k){
+    return '<div style="background:#fff;border-radius:10px;border:1px solid #e5e7eb;padding:14px;display:flex;gap:10px;">'
+      +'<div style="width:3px;border-radius:4px;background:'+C[k]+';flex-shrink:0;"></div>'
+      +'<div><div style="font-size:10px;font-weight:700;color:'+C[k]+';text-transform:uppercase;">'+k+'</div>'
+      +'<div style="font-size:13px;font-weight:600;color:#111827;margin:2px 0;">'+ML[k]+'</div>'
+      +'<div style="font-size:11px;color:#6b7280;">'+MD[k]+'</div></div></div>';
+  }).join('');
+
+  var safeConc = conc.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+  return '<!DOCTYPE html><html lang="en"><head>'
+    +'<meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/>'
+    +'<title>Athlete Performance Report</title>'
+    +'<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"><\/script>'
+    +'<style>'
+    +'*{box-sizing:border-box;margin:0;padding:0;}'
+    +'body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:#f9fafb;}'
+    +'.hdr{background:#111827;color:#fff;padding:24px 16px;}'
+    +'.lbl{font-size:10px;letter-spacing:2px;color:#9ca3af;text-transform:uppercase;margin-bottom:8px;}'
+    +'.hdr h1{font-size:22px;font-weight:700;}'
+    +'.hdr .sub{font-size:13px;color:#d1d5db;margin-top:5px;}'
+    +'.hdr .dt{font-size:11px;color:#6b7280;margin-top:5px;}'
+    +'.wrap{max-width:860px;margin:0 auto;padding:16px;}'
+    +'.tbar{display:flex;gap:4px;background:#e5e7eb;border-radius:10px;padding:4px;margin-bottom:16px;}'
+    +'.tbtn{flex:1;padding:10px 4px;border-radius:8px;border:none;cursor:pointer;font-size:13px;font-weight:500;background:transparent;color:#6b7280;-webkit-tap-highlight-color:transparent;}'
+    +'.tbtn.on{background:#fff;color:#111827;box-shadow:0 1px 4px rgba(0,0,0,0.1);}'
+    +'.tc{display:none;}.tc.on{display:block;}'
+    +'.mg{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;}'
+    +'@media(min-width:560px){.mg{grid-template-columns:repeat(4,1fr);}}'
+    +'.mc{background:#fff;border-radius:12px;padding:14px 12px;border:2px solid #e5e7eb;cursor:pointer;transition:opacity 0.2s;-webkit-tap-highlight-color:transparent;}'
+    +'.mc.off{opacity:0.35;}'
+    +'.cb{background:#fff;border-radius:12px;border:1px solid #e5e7eb;padding:20px;margin-bottom:16px;}'
+    +'.cl{font-size:11px;font-weight:600;color:#9ca3af;text-transform:uppercase;letter-spacing:1px;margin-bottom:14px;}'
+    +'.cc{position:relative;width:100%;height:250px;}'
+    +'@media(min-width:600px){.cc{height:300px;}}'
+    +'.dg{display:grid;grid-template-columns:1fr 1fr;gap:10px;}'
+    +'@media(min-width:560px){.dg{grid-template-columns:repeat(4,1fr);}}'
+    +'.dtbl{width:100%;border-collapse:collapse;font-size:13px;}'
+    +'.dtbl th{padding:10px;border:1px solid #e5e7eb;background:#f9fafb;font-size:11px;font-weight:700;}'
+    +'.dtbl td{padding:10px;border:1px solid #e5e7eb;text-align:center;}'
+    +'</style></head><body>'
+    +'<div class="hdr"><div class="lbl">Athlete Performance Report</div>'
+    +'<h1>'+name+'</h1>'
+    +'<div class="sub">'+team+' &nbsp;·&nbsp; '+coach+'</div>'
+    +'<div class="dt">'+dateStr+'</div></div>'
+    +'<div class="wrap">'
+    +'<div class="tbar">'
+    +'<button class="tbtn on" onclick="st(\'report\',this)">Report</button>'
+    +'<button class="tbtn" onclick="st(\'data\',this)">Data</button>'
+    +'<button class="tbtn" onclick="st(\'conc\',this)">✦ Conclusions</button>'
+    +'</div>'
+    +'<div id="t-report" class="tc on">'
+    +'<div class="mg">'+cards+'</div>'
+    +'<div class="cb"><div class="cl">Score Trends Over Time</div>'
+    +'<div class="cc"><canvas id="ch"></canvas></div>'
+    +'<div style="font-size:11px;color:#9ca3af;font-style:italic;margin-top:8px;">* Tap a card to toggle · Lower = better</div>'
+    +'</div>'
+    +'<div class="dg">'+descs+'</div></div>'
+    +'<div id="t-data" class="tc">'
+    +'<div style="background:#fff;border-radius:12px;border:1px solid #e5e7eb;padding:16px;overflow-x:auto;">'
+    +'<div style="font-size:11px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;">Score Data</div>'
+    +'<table class="dtbl"><thead><tr><th style="text-align:left;">Period</th>'
+    +M.map(function(k){return '<th style="color:'+C[k]+';">'+k+'</th>';}).join('')
+    +'</tr></thead><tbody>'+trows+'</tbody></table>'
+    +'<div style="font-size:11px;color:#9ca3af;font-style:italic;margin-top:8px;">* Lower = better</div>'
+    +'</div></div>'
+    +'<div id="t-conc" class="tc">'
+    +'<div style="background:#fff;border-radius:12px;border:1px solid #e5e7eb;padding:20px;">'
+    +'<div style="font-size:11px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:1px;margin-bottom:14px;">Conclusions</div>'
+    +'<div style="font-size:14px;color:#374151;line-height:1.85;white-space:pre-line;">'+safeConc+'</div>'
+    +'</div></div></div>'
+    +'<script>'
+    +'var D='+JSON.stringify(rows)+';'
+    +'var C={PIS:"#ef4444",PSS:"#3b82f6",RAS:"#10b981",CPTS:"#f59e0b"};'
+    +'var M=["PIS","PSS","RAS","CPTS"];'
+    +'var vis={PIS:true,PSS:true,RAS:true,CPTS:true};'
+    +'var ch=new Chart(document.getElementById("ch").getContext("2d"),{'
+    +'type:"line",'
+    +'data:{labels:D.map(function(d){return d.month;}),'
+    +'datasets:M.map(function(k){return{label:k,data:D.map(function(d){return d[k];}),borderColor:C[k],backgroundColor:C[k]+"22",borderWidth:2.5,pointRadius:5,pointHoverRadius:7,tension:0.35,fill:false};})},'
+    +'options:{responsive:true,maintainAspectRatio:false,'
+    +'interaction:{mode:"index",intersect:false},'
+    +'plugins:{legend:{display:false},'
+    +'tooltip:{backgroundColor:"#111827",titleColor:"#f9fafb",bodyColor:"#d1d5db",padding:12,cornerRadius:10,'
+    +'callbacks:{label:function(c){return" "+c.dataset.label+": "+c.parsed.y;}}}},'
+    +'scales:{y:{min:0,max:100,grid:{color:"#f0f0f0"}},x:{grid:{color:"#f0f0f0"}}}}});'
+    +'function tog(k){vis[k]=!vis[k];document.getElementById("c-"+k).classList.toggle("off",!vis[k]);var ds=ch.data.datasets.find(function(d){return d.label===k;});if(ds){ds.hidden=!vis[k];ch.update();}}'
+    +'function st(n,b){document.querySelectorAll(".tc").forEach(function(e){e.classList.remove("on");});document.querySelectorAll(".tbtn").forEach(function(e){e.classList.remove("on");});document.getElementById("t-"+n).classList.add("on");b.classList.add("on");}'
+    +'<\/script></body></html>';
+}
+
+async function publishToGitHub(){
+  var btn = document.getElementById('btnExp');
+  btn.disabled = true;
+  btn.textContent = 'Publishing...';
+  showToast('⏳ Publishing to GitHub...', 'info');
+
+  var html    = buildHTML();
+  var content = btoa(unescape(encodeURIComponent(html)));
+  var apiURL  = 'https://api.github.com/repos/'+GITHUB_USER+'/'+GITHUB_REPO+'/contents/'+GITHUB_FILE;
+
+  try{
+    // Get current file SHA (needed to update existing file)
+    var sha = null;
+    try{
+      var getRes = await fetch(apiURL, {
+        headers:{
+          'Authorization': 'token '+GITHUB_TOKEN,
+          'Accept': 'application/vnd.github.v3+json'
+        }
+      });
+      if(getRes.ok){
+        var getData = await getRes.json();
+        sha = getData.sha;
+      }
+    }catch(e){}
+
+    var body = {
+      message: 'Update athlete report - '+new Date().toLocaleString(),
+      content: content,
+      branch:  GITHUB_BRANCH
+    };
+    if(sha) body.sha = sha;
+
+    var putRes = await fetch(apiURL, {
+      method:  'PUT',
+      headers:{
+        'Authorization': 'token '+GITHUB_TOKEN,
+        'Accept':        'application/vnd.github.v3+json',
+        'Content-Type':  'application/json'
+      },
+      body: JSON.stringify(body)
+    });
+
+    if(putRes.ok){
+      showToast('✅ Published! Live in 1–2 mins.', 'ok');
+    } else {
+      var err = await putRes.json();
+      showToast('❌ Error: '+(err.message||'Try again'), 'err');
+    }
+  }catch(e){
+    showToast('❌ Network error. Check connection.', 'err');
+  }
+
+  btn.disabled = false;
+  btn.textContent = '🚀 Publish to Client Report';
+}
+
+document.getElementById('btnExp').addEventListener('click', publishToGitHub);
+
+load();
+</script>
+</body>
+</html>
