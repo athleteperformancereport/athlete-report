@@ -12,7 +12,7 @@ h1 span{display:block;font-size:12px;color:#9ca3af;font-weight:400;margin-top:2p
 .card{background:#fff;margin:12px;border-radius:10px;padding:16px;border:1px solid #e5e7eb;}
 .card h2{font-size:11px;color:#9ca3af;text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;}
 label{display:block;font-size:13px;font-weight:600;color:#374151;margin-bottom:4px;margin-top:10px;}
-input[type=text],input[type=date],textarea{
+input[type=text],input[type=date],input[type=password],textarea{
   display:block;width:100%;padding:12px;font-size:16px;
   border:1.5px solid #d1d5db;border-radius:8px;
   background:#fff;color:#000;font-family:-apple-system,sans-serif;
@@ -43,12 +43,30 @@ td:first-child input{text-align:left;font-size:14px;}
 .toast.ok{background:#16a34a;}
 .toast.err{background:#dc2626;}
 .toast.info{background:#111827;}
+.token-status{font-size:12px;margin-top:8px;padding:8px 10px;border-radius:6px;}
+.token-ok{background:#f0fdf4;color:#16a34a;border:1px solid #bbf7d0;}
+.token-missing{background:#fff7ed;color:#ea580c;border:1px solid #fed7aa;}
+.btn-clear{margin-top:8px;padding:8px 14px;background:#fee2e2;color:#dc2626;border:none;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;}
 </style>
 </head>
 <body>
 
 <h1>⚙️ Athlete Report Editor<span>Edit below — tap Publish to update the client report instantly</span></h1>
 
+<!-- GitHub Settings -->
+<div class="card">
+  <h2>⚙️ GitHub Settings (One time setup)</h2>
+  <label>GitHub Personal Access Token</label>
+  <input type="password" id="f_token" placeholder="Paste your GitHub token here"/>
+  <div id="tokenStatus" class="token-status token-missing">⚠️ No token saved yet</div>
+  <button class="btn-clear" id="btnSaveToken">💾 Save Token</button>
+  &nbsp;
+  <button class="btn-clear" id="btnClearToken" style="display:none">🗑 Clear Token</button>
+  <label>Repository Name</label>
+  <input type="text" id="f_repo" placeholder="e.g. athlete-report" autocorrect="off" spellcheck="false"/>
+</div>
+
+<!-- Athlete Details -->
 <div class="card">
   <h2>Athlete Details</h2>
   <label>Athlete Name</label>
@@ -61,6 +79,7 @@ td:first-child input{text-align:left;font-size:14px;}
   <input type="date" id="f_date"/>
 </div>
 
+<!-- Score Data -->
 <div class="card">
   <h2>Score Data (0–100, lower is better)</h2>
   <div style="overflow-x:auto;">
@@ -83,6 +102,7 @@ td:first-child input{text-align:left;font-size:14px;}
   </div>
 </div>
 
+<!-- Conclusions -->
 <div class="card">
   <h2>Conclusions</h2>
   <textarea id="f_conc" placeholder="Write your conclusions here..."></textarea>
@@ -95,11 +115,7 @@ td:first-child input{text-align:left;font-size:14px;}
 <div class="toast" id="toast"></div>
 
 <script>
-var GITHUB_TOKEN = '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';
-var GITHUB_USER  = 'athleteperformancereport';
-var GITHUB_REPO  = 'athlete-report';
-var GITHUB_FILE  = 'index.html';
-var GITHUB_BRANCH= 'main';
+var GITHUB_USER = 'athleteperformancereport';
 
 var rows = [
   {month:'Month 1',PIS:72,PSS:65,RAS:58,CPTS:60},
@@ -110,13 +126,60 @@ var rows = [
   {month:'Month 6',PIS:47,PSS:87,RAS:85,CPTS:84}
 ];
 
-function showToast(msg, type){
-  var t = document.getElementById('toast');
-  t.textContent = msg;
-  t.className = 'toast show ' + (type||'info');
-  setTimeout(function(){t.className='toast';}, 3500);
+function showToast(msg,type){
+  var t=document.getElementById('toast');
+  t.textContent=msg;t.className='toast show '+(type||'info');
+  setTimeout(function(){t.className='toast';},3500);
 }
 
+// Token management
+function loadToken(){
+  var token = localStorage.getItem('gh_token');
+  var repo  = localStorage.getItem('gh_repo');
+  if(token){
+    document.getElementById('f_token').value = '••••••••••••••••••••';
+    document.getElementById('tokenStatus').className = 'token-status token-ok';
+    document.getElementById('tokenStatus').textContent = '✅ Token saved securely in your browser';
+    document.getElementById('btnClearToken').style.display = 'inline-block';
+    document.getElementById('btnSaveToken').textContent = '💾 Update Token';
+  }
+  if(repo) document.getElementById('f_repo').value = repo;
+}
+
+document.getElementById('btnSaveToken').addEventListener('click', function(){
+  var val = document.getElementById('f_token').value.trim();
+  var repo = document.getElementById('f_repo').value.trim();
+  if(!val || val.indexOf('•') !== -1){
+    showToast('⚠️ Please paste your token first', 'err');
+    return;
+  }
+  if(!repo){
+    showToast('⚠️ Please enter your repo name', 'err');
+    return;
+  }
+  localStorage.setItem('gh_token', val);
+  localStorage.setItem('gh_repo', repo);
+  document.getElementById('f_token').value = '••••••••••••••••••••';
+  document.getElementById('tokenStatus').className = 'token-status token-ok';
+  document.getElementById('tokenStatus').textContent = '✅ Token saved securely in your browser';
+  document.getElementById('btnClearToken').style.display = 'inline-block';
+  document.getElementById('btnSaveToken').textContent = '💾 Update Token';
+  showToast('✅ Token saved!', 'ok');
+});
+
+document.getElementById('btnClearToken').addEventListener('click', function(){
+  localStorage.removeItem('gh_token');
+  localStorage.removeItem('gh_repo');
+  document.getElementById('f_token').value = '';
+  document.getElementById('f_repo').value = '';
+  document.getElementById('tokenStatus').className = 'token-status token-missing';
+  document.getElementById('tokenStatus').textContent = '⚠️ No token saved yet';
+  document.getElementById('btnClearToken').style.display = 'none';
+  document.getElementById('btnSaveToken').textContent = '💾 Save Token';
+  showToast('Token cleared', 'info');
+});
+
+// Data save/load
 function save(){
   try{
     localStorage.setItem('rpt', JSON.stringify({
@@ -144,41 +207,42 @@ function load(){
     }
   }catch(e){}
   renderTable();
+  loadToken();
 }
 
 function renderTable(){
   var tb = document.getElementById('tbl');
   tb.innerHTML = '';
-  for(var i = 0; i < rows.length; i++){
+  for(var i=0;i<rows.length;i++){
     (function(idx){
       var tr = document.createElement('tr');
       var keys = ['month','PIS','PSS','RAS','CPTS'];
-      for(var j = 0; j < keys.length; j++){
+      for(var j=0;j<keys.length;j++){
         (function(key){
           var td  = document.createElement('td');
           var inp = document.createElement('input');
-          if(key === 'month'){
-            inp.type = 'text';
+          if(key==='month'){
+            inp.type='text';
             inp.setAttribute('inputmode','text');
             inp.setAttribute('autocorrect','off');
             inp.setAttribute('spellcheck','false');
-            inp.style.textAlign = 'left';
+            inp.style.textAlign='left';
           } else {
-            inp.type = 'number';
+            inp.type='number';
             inp.setAttribute('inputmode','numeric');
-            inp.min = '0'; inp.max = '100';
+            inp.min='0';inp.max='100';
           }
           inp.value = rows[idx][key];
-          inp.addEventListener('change', function(){
-            if(key === 'month'){
-              rows[idx][key] = this.value;
+          inp.addEventListener('change',function(){
+            if(key==='month'){
+              rows[idx][key]=this.value;
             } else {
-              var v = parseInt(this.value, 10);
-              if(isNaN(v)) v = 0;
-              if(v < 0) v = 0;
-              if(v > 100) v = 100;
-              rows[idx][key] = v;
-              this.value = v;
+              var v=parseInt(this.value,10);
+              if(isNaN(v))v=0;
+              if(v<0)v=0;
+              if(v>100)v=100;
+              rows[idx][key]=v;
+              this.value=v;
             }
             save();
           });
@@ -191,18 +255,18 @@ function renderTable(){
   }
 }
 
-document.getElementById('btnAdd').addEventListener('click', function(){
+document.getElementById('btnAdd').addEventListener('click',function(){
   rows.push({month:'Month '+(rows.length+1),PIS:50,PSS:50,RAS:50,CPTS:50});
-  renderTable(); save();
-  showToast('Period added!', 'ok');
+  renderTable();save();
+  showToast('Period added!','ok');
 });
 
-document.getElementById('btnRem').addEventListener('click', function(){
-  if(rows.length > 1){ rows.pop(); renderTable(); save(); showToast('Period removed!', 'info'); }
+document.getElementById('btnRem').addEventListener('click',function(){
+  if(rows.length>1){rows.pop();renderTable();save();showToast('Period removed!','info');}
 });
 
 ['f_name','f_team','f_coach','f_date','f_conc'].forEach(function(id){
-  document.getElementById(id).addEventListener('input', save);
+  document.getElementById(id).addEventListener('input',save);
 });
 
 function buildHTML(){
@@ -220,10 +284,10 @@ function buildHTML(){
   var MD = {PIS:'Measures subconscious interference during a game. Lower is better.',PSS:'Measures pressure, mistakes, and turnovers. Lower is better.',RAS:'Measures misalignment with role assessment. Lower is better.',CPTS:'Measures coach concern about athlete under pressure. Lower is better.'};
   var M  = ['PIS','PSS','RAS','CPTS'];
 
-  var cards = M.map(function(k){
-    var vals = rows.map(function(r){return r[k];});
-    var last = vals[vals.length-1];
-    var diff = last - vals[0];
+  var cards=M.map(function(k){
+    var vals=rows.map(function(r){return r[k];});
+    var last=vals[vals.length-1];
+    var diff=last-vals[0];
     return '<div class="mc" id="c-'+k+'" onclick="tog(\''+k+'\')" style="border-color:'+C[k]+'">'
       +'<div style="font-size:11px;font-weight:700;color:'+C[k]+';margin-bottom:4px;">'+k+'</div>'
       +'<div style="font-size:26px;font-weight:700;color:#111827;">'+last+'</div>'
@@ -231,13 +295,13 @@ function buildHTML(){
       +'</div>';
   }).join('');
 
-  var trows = rows.map(function(r){
+  var trows=rows.map(function(r){
     return '<tr><td style="padding:10px;border:1px solid #e5e7eb;font-weight:600;">'+r.month+'</td>'
       +M.map(function(k){return '<td style="padding:10px;border:1px solid #e5e7eb;text-align:center;font-weight:600;color:'+C[k]+';">'+r[k]+'</td>';}).join('')
       +'</tr>';
   }).join('');
 
-  var descs = M.map(function(k){
+  var descs=M.map(function(k){
     return '<div style="background:#fff;border-radius:10px;border:1px solid #e5e7eb;padding:14px;display:flex;gap:10px;">'
       +'<div style="width:3px;border-radius:4px;background:'+C[k]+';flex-shrink:0;"></div>'
       +'<div><div style="font-size:10px;font-weight:700;color:'+C[k]+';text-transform:uppercase;">'+k+'</div>'
@@ -245,7 +309,7 @@ function buildHTML(){
       +'<div style="font-size:11px;color:#6b7280;">'+MD[k]+'</div></div></div>';
   }).join('');
 
-  var safeConc = conc.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  var safeConc=conc.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 
   return '<!DOCTYPE html><html lang="en"><head>'
     +'<meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/>'
@@ -293,8 +357,7 @@ function buildHTML(){
     +'<div class="cb"><div class="cl">Score Trends Over Time</div>'
     +'<div class="cc"><canvas id="ch"></canvas></div>'
     +'<div style="font-size:11px;color:#9ca3af;font-style:italic;margin-top:8px;">* Tap a card to toggle · Lower = better</div>'
-    +'</div>'
-    +'<div class="dg">'+descs+'</div></div>'
+    +'</div><div class="dg">'+descs+'</div></div>'
     +'<div id="t-data" class="tc">'
     +'<div style="background:#fff;border-radius:12px;border:1px solid #e5e7eb;padding:16px;overflow-x:auto;">'
     +'<div style="font-size:11px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;">Score Data</div>'
@@ -329,23 +392,34 @@ function buildHTML(){
 }
 
 async function publishToGitHub(){
+  var token = localStorage.getItem('gh_token');
+  var repo  = localStorage.getItem('gh_repo');
+
+  if(!token){
+    showToast('⚠️ Please save your token first!','err');
+    return;
+  }
+  if(!repo){
+    showToast('⚠️ Please enter your repo name!','err');
+    return;
+  }
+
   var btn = document.getElementById('btnExp');
   btn.disabled = true;
   btn.textContent = 'Publishing...';
-  showToast('⏳ Publishing to GitHub...', 'info');
+  showToast('⏳ Publishing to GitHub...','info');
 
   var html    = buildHTML();
   var content = btoa(unescape(encodeURIComponent(html)));
-  var apiURL  = 'https://api.github.com/repos/'+GITHUB_USER+'/'+GITHUB_REPO+'/contents/'+GITHUB_FILE;
+  var apiURL  = 'https://api.github.com/repos/'+GITHUB_USER+'/'+repo+'/contents/index.html';
 
   try{
-    // Get current file SHA (needed to update existing file)
     var sha = null;
     try{
-      var getRes = await fetch(apiURL, {
+      var getRes = await fetch(apiURL,{
         headers:{
-          'Authorization': 'token '+GITHUB_TOKEN,
-          'Accept': 'application/vnd.github.v3+json'
+          'Authorization':'token '+token,
+          'Accept':'application/vnd.github.v3+json'
         }
       });
       if(getRes.ok){
@@ -355,30 +429,30 @@ async function publishToGitHub(){
     }catch(e){}
 
     var body = {
-      message: 'Update athlete report - '+new Date().toLocaleString(),
+      message:'Update athlete report - '+new Date().toLocaleString(),
       content: content,
-      branch:  GITHUB_BRANCH
+      branch: 'main'
     };
     if(sha) body.sha = sha;
 
-    var putRes = await fetch(apiURL, {
-      method:  'PUT',
+    var putRes = await fetch(apiURL,{
+      method:'PUT',
       headers:{
-        'Authorization': 'token '+GITHUB_TOKEN,
-        'Accept':        'application/vnd.github.v3+json',
-        'Content-Type':  'application/json'
+        'Authorization':'token '+token,
+        'Accept':'application/vnd.github.v3+json',
+        'Content-Type':'application/json'
       },
       body: JSON.stringify(body)
     });
 
     if(putRes.ok){
-      showToast('✅ Published! Live in 1–2 mins.', 'ok');
+      showToast('✅ Published! Live in 1–2 mins.','ok');
     } else {
       var err = await putRes.json();
-      showToast('❌ Error: '+(err.message||'Try again'), 'err');
+      showToast('❌ '+(err.message||'Error. Try again.'),'err');
     }
   }catch(e){
-    showToast('❌ Network error. Check connection.', 'err');
+    showToast('❌ Network error. Check connection.','err');
   }
 
   btn.disabled = false;
