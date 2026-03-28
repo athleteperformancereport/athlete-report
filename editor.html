@@ -6,7 +6,7 @@
 <title>Athlete Report Editor</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
-body{font-family:-apple-system,sans-serif;background:#f3f4f6;padding-bottom:90px;}
+body{font-family:-apple-system,sans-serif;background:#f3f4f6;padding-bottom:80px;}
 h1{background:#111827;color:#fff;padding:16px;font-size:18px;}
 h1 span{display:block;font-size:12px;color:#9ca3af;font-weight:400;margin-top:2px;}
 .card{background:#fff;margin:12px;border-radius:10px;padding:16px;border:1px solid #e5e7eb;}
@@ -36,9 +36,9 @@ td:first-child input{text-align:left;font-size:14px;}
 .badd{flex:1;padding:14px;background:#111827;color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700;}
 .brem{flex:1;padding:14px;background:#e5e7eb;color:#374151;border:none;border-radius:10px;font-size:15px;font-weight:700;}
 .footer{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid #e5e7eb;padding:10px 12px;display:flex;gap:8px;}
-.bexp{flex:2;padding:15px;background:#6366f1;color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:700;}
+.bexp{flex:1;padding:15px;background:#6366f1;color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:700;}
+.bexp:disabled{background:#a5b4fc;}
 .bpdf{flex:1;padding:15px;background:#111827;color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:700;}
-.bexp:disabled,.bpdf:disabled{opacity:0.5;}
 .toast{position:fixed;top:20px;left:50%;transform:translateX(-50%);padding:12px 20px;border-radius:10px;font-size:14px;font-weight:600;opacity:0;transition:opacity 0.3s;z-index:999;pointer-events:none;white-space:nowrap;color:#fff;}
 .toast.show{opacity:1;}
 .toast.ok{background:#16a34a;}
@@ -47,43 +47,40 @@ td:first-child input{text-align:left;font-size:14px;}
 .token-status{font-size:12px;margin-top:8px;padding:8px 10px;border-radius:6px;}
 .token-ok{background:#f0fdf4;color:#16a34a;border:1px solid #bbf7d0;}
 .token-missing{background:#fff7ed;color:#ea580c;border:1px solid #fed7aa;}
-.btn-save{margin-top:8px;padding:8px 14px;background:#f0fdf4;color:#16a34a;border:1px solid #bbf7d0;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;}
-.btn-clear{margin-top:8px;padding:8px 14px;background:#fee2e2;color:#dc2626;border:none;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;margin-left:6px;}
+.btn-save-token{margin-top:8px;padding:10px 16px;background:#111827;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;}
+.btn-clear-token{margin-top:8px;padding:10px 16px;background:#fee2e2;color:#dc2626;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;display:none;}
 
-/* PDF Preview Overlay */
-#pdfOverlay{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.85);z-index:9999;overflow-y:auto;padding:20px;}
-#pdfOverlay .pdf-actions{display:flex;gap:8px;margin-bottom:12px;}
-#pdfOverlay .pdf-actions button{flex:1;padding:12px;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;}
-.btn-print{background:#6366f1;color:#fff;}
-.btn-close{background:#e5e7eb;color:#374151;}
-#pdfContent{background:#fff;border-radius:12px;padding:28px;max-width:800px;margin:0 auto;}
-
-@media print{
-  body > *{display:none !important;}
-  #pdfContent{display:block !important;padding:20px;border-radius:0;}
-  #pdfOverlay{display:block !important;position:static;background:none;padding:0;}
-  #pdfOverlay .pdf-actions{display:none !important;}
+/* Print styles */
+@media print {
+  body{background:#fff;padding:0;}
+  .no-print{display:none!important;}
+  .print-area{display:block!important;}
+  .footer{display:none!important;}
+  h1{display:none!important;}
+  .card{display:none!important;}
+  #printArea{display:block!important;}
 }
+#printArea{display:none;}
 </style>
 </head>
 <body>
 
-<h1>⚙️ Athlete Report Editor<span>Edit below — Publish updates live link · PDF saves a copy</span></h1>
+<h1>⚙️ Athlete Report Editor<span>Edit below — tap Publish to update the client report instantly</span></h1>
 
 <!-- GitHub Settings -->
-<div class="card">
+<div class="card no-print">
   <h2>⚙️ GitHub Settings (One time setup)</h2>
   <label>GitHub Personal Access Token</label>
   <input type="password" id="f_token" placeholder="Paste your GitHub token here"/>
   <div id="tokenStatus" class="token-status token-missing">⚠️ No token saved yet</div>
-  <button class="btn-save" id="btnSaveToken">💾 Save Token</button>
-  <button class="btn-clear" id="btnClearToken" style="display:none">🗑 Clear Token</button>
+  <button class="btn-save-token" id="btnSaveToken">💾 Save Token</button>
+  <button class="btn-clear-token" id="btnClearToken">🗑 Clear Token</button>
   <label>Repository Name</label>
   <input type="text" id="f_repo" placeholder="e.g. athlete-report" autocorrect="off" spellcheck="false"/>
 </div>
 
 <!-- Athlete Details -->
-<div class="card">
+<div class="card no-print">
   <h2>Athlete Details</h2>
   <label>Athlete Name</label>
   <input type="text" id="f_name" placeholder="e.g. John Doe" autocorrect="off" spellcheck="false"/>
@@ -96,7 +93,7 @@ td:first-child input{text-align:left;font-size:14px;}
 </div>
 
 <!-- Score Data -->
-<div class="card">
+<div class="card no-print">
   <h2>Score Data (0–100, lower is better)</h2>
   <div style="overflow-x:auto;">
     <table>
@@ -119,27 +116,22 @@ td:first-child input{text-align:left;font-size:14px;}
 </div>
 
 <!-- Conclusions -->
-<div class="card">
+<div class="card no-print">
   <h2>Conclusions</h2>
   <textarea id="f_conc" placeholder="Write your conclusions here..."></textarea>
 </div>
 
-<div class="footer">
-  <button class="bpdf" id="btnPDF">🖨 PDF</button>
-  <button class="bexp" id="btnExp">🚀 Publish to Client Report</button>
-</div>
+<!-- Print Area (hidden until print) -->
+<div id="printArea"></div>
 
-<!-- PDF Preview Overlay -->
-<div id="pdfOverlay">
-  <div class="pdf-actions">
-    <button class="btn-print" onclick="window.print()">🖨 Print / Save as PDF</button>
-    <button class="btn-close" onclick="closePDF()">✕ Close</button>
-  </div>
-  <div id="pdfContent"></div>
+<div class="footer">
+  <button class="bexp" id="btnExp">🚀 Publish</button>
+  <button class="bpdf" id="btnPdf">🖨 Save PDF</button>
 </div>
 
 <div class="toast" id="toast"></div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script>
 var GITHUB_USER = 'athleteperformancereport';
 
@@ -152,12 +144,24 @@ var rows = [
   {month:'Month 6',PIS:47,PSS:87,RAS:85,CPTS:84}
 ];
 
+var C  = {PIS:'#ef4444',PSS:'#3b82f6',RAS:'#10b981',CPTS:'#f59e0b'};
+var ML = {PIS:'Performance Interference Score',PSS:'Pressure Stability Score',RAS:'Role Alignment Score',CPTS:'Coach Performance Trust Score'};
+var MD = {
+  PIS:'Measures subconscious interference such as hesitation, overthinking, confidence fluctuation and mental noise. Lower is better.',
+  PSS:'Measures how athletes handle pressure, mistakes, and turnovers. Lower is better.',
+  RAS:'Measures an athlete\'s resistance with role assessment. Lower is better.',
+  CPTS:'Measures how much trust the Coach has in an athlete under pressure. Lower is better.'
+};
+var WORST = {PIS:80, PSS:60, RAS:60, CPTS:60};
+var M = ['PIS','PSS','RAS','CPTS'];
+
 function showToast(msg,type){
   var t=document.getElementById('toast');
   t.textContent=msg;t.className='toast show '+(type||'info');
   setTimeout(function(){t.className='toast';},3500);
 }
 
+// Token management
 function loadToken(){
   var token=localStorage.getItem('gh_token');
   var repo=localStorage.getItem('gh_repo');
@@ -279,200 +283,233 @@ document.getElementById('btnRem').addEventListener('click',function(){
   document.getElementById(id).addEventListener('input',save);
 });
 
-function getDetails(){
-  return {
-    name:  document.getElementById('f_name').value  ||'Athlete Name',
-    team:  document.getElementById('f_team').value  ||'Team',
-    coach: document.getElementById('f_coach').value ||'Coach Name',
-    conc:  document.getElementById('f_conc').value  ||'',
-    date:  (function(){
-      var dval=document.getElementById('f_date').value;
-      return dval
-        ? new Date(dval+'T00:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'})
-        : new Date().toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'});
-    })()
-  };
-}
+// PDF Print
+document.getElementById('btnPdf').addEventListener('click',function(){
+  var name=document.getElementById('f_name').value||'Athlete Name';
+  var team=document.getElementById('f_team').value||'Team';
+  var coach=document.getElementById('f_coach').value||'Coach Name';
+  var conc=document.getElementById('f_conc').value||'';
+  var dval=document.getElementById('f_date').value;
+  var dateStr=dval?new Date(dval+'T00:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'}):new Date().toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'});
 
-var C  = {PIS:'#ef4444',PSS:'#3b82f6',RAS:'#10b981',CPTS:'#f59e0b'};
-var ML = {PIS:'Performance Interference Score',PSS:'Pressure Stability Score',RAS:'Role Alignment Score',CPTS:'Coach Performance Trust Score'};
-var MD = {PIS:'Measures subconscious interference during a game. Lower is better.',PSS:'Measures pressure, mistakes, and turnovers. Lower is better.',RAS:'Measures misalignment with role assessment. Lower is better.',CPTS:'Measures coach concern about athlete under pressure. Lower is better.'};
-var M  = ['PIS','PSS','RAS','CPTS'];
-
-// ── PDF Preview ───────────────────────────────────────────────
-document.getElementById('btnPDF').addEventListener('click',function(){
-  var d = getDetails();
-
-  var cards=M.map(function(k){
+  // Build cards HTML for print
+  var cardsHtml=M.map(function(k){
     var vals=rows.map(function(r){return r[k];});
     var last=vals[vals.length-1];
     var diff=last-vals[0];
     return '<div style="background:#fff;border:2px solid '+C[k]+';border-radius:10px;padding:12px;text-align:center;">'
-      +'<div style="font-size:10px;font-weight:700;color:'+C[k]+';margin-bottom:4px;">'+k+'</div>'
-      +'<div style="font-size:22px;font-weight:700;color:#111827;">'+last+'</div>'
-      +'<div style="font-size:11px;font-weight:600;color:'+(diff<0?'#16a34a':'#dc2626')+';">'+(diff>=0?'▲':'▼')+' '+Math.abs(diff)+' pts</div>'
+      +'<div style="font-size:12px;font-weight:700;color:'+C[k]+';margin-bottom:4px;">'+ML[k]+' ('+k+')</div>'
+      +'<div style="font-size:28px;font-weight:800;color:#111827;">'+last+'</div>'
+      +'<div style="font-size:12px;font-weight:600;color:'+(diff<0?'#16a34a':'#dc2626')+';">'+(diff>=0?'▲':'▼')+' '+Math.abs(diff)+' pts</div>'
       +'</div>';
   }).join('');
 
+  // Build desc HTML for print
+  var descHtml=M.map(function(k){
+    return '<div style="background:#fff;border-radius:10px;border:1px solid #e5e7eb;padding:12px;display:flex;gap:10px;">'
+      +'<div style="width:3px;border-radius:4px;background:'+C[k]+';flex-shrink:0;"></div>'
+      +'<div><div style="font-size:11px;font-weight:700;color:'+C[k]+';text-transform:uppercase;">'+ML[k]+' ('+k+')</div>'
+      +'<div style="font-size:12px;color:#6b7280;margin-top:4px;">'+MD[k]+'</div></div></div>';
+  }).join('');
+
+  // Build table rows for print
   var trows=rows.map(function(r){
-    return '<tr><td style="padding:8px 10px;border:1px solid #e5e7eb;font-weight:600;color:#374151;">'+r.month+'</td>'
-      +M.map(function(k){return '<td style="padding:8px 10px;border:1px solid #e5e7eb;text-align:center;font-weight:600;color:'+C[k]+';">'+r[k]+'</td>';}).join('')+'</tr>';
+    return '<tr><td style="padding:8px;border:1px solid #e5e7eb;font-weight:600;">'+r.month+'</td>'
+      +M.map(function(k){return '<td style="padding:8px;border:1px solid #e5e7eb;text-align:center;font-weight:600;color:'+C[k]+';">'+r[k]+'</td>';}).join('')
+      +'</tr>';
   }).join('');
 
-  var descs=M.map(function(k){
-    return '<div style="display:flex;gap:8px;align-items:flex-start;">'
-      +'<div style="width:3px;min-height:40px;border-radius:4px;background:'+C[k]+';flex-shrink:0;margin-top:2px;"></div>'
-      +'<div><div style="font-size:9px;font-weight:700;color:'+C[k]+';text-transform:uppercase;">'+k+' — '+ML[k]+'</div>'
-      +'<div style="font-size:11px;color:#6b7280;margin-top:1px;">'+MD[k]+'</div></div></div>';
+  // Score range
+  var rangeHtml=M.map(function(k){
+    return '<span style="margin-right:16px;"><span style="color:'+C[k]+';font-weight:700;">'+k+'</span> — best: 0 &nbsp;|&nbsp; worst: '+WORST[k]+'</span>';
   }).join('');
 
-  var safeConc=(d.conc||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-
-  var printHTML='<!DOCTYPE html><html><head>'
+  var printContent='<!DOCTYPE html><html><head>'
     +'<meta charset="UTF-8"/>'
-    +'<meta name="viewport" content="width=device-width,initial-scale=1.0"/>'
-    +'<title>'+d.name+' — Performance Report</title>'
+    +'<title>Athlete Performance Report — '+name+'</title>'
     +'<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"><\/script>'
     +'<style>'
     +'*{box-sizing:border-box;margin:0;padding:0;}'
-    +'body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:#fff;padding:0;}'
-    +'.print-btn{position:fixed;top:12px;right:12px;padding:12px 22px;background:#6366f1;color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;z-index:999;box-shadow:0 4px 14px rgba(99,102,241,0.4);}'
-    +'@media print{.print-btn{display:none;}}'
-    +'.page{max-width:800px;margin:0 auto;padding:24px;}'
+    +'body{font-family:-apple-system,sans-serif;background:#fff;padding:24px;color:#111827;}'
     +'.hdr{background:#111827;color:#fff;padding:20px;border-radius:10px;margin-bottom:20px;}'
-    +'.sec{font-size:10px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;margin-top:20px;}'
-    +'.cards{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:4px;}'
-    +'.chart-wrap{background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:16px;margin-top:16px;margin-bottom:4px;}'
-    +'.chart-box{position:relative;width:100%;height:220px;}'
-    +'.tbl{width:100%;border-collapse:collapse;font-size:12px;}'
-    +'.tbl th{padding:8px 10px;border:1px solid #e5e7eb;background:#f9fafb;font-size:11px;font-weight:700;}'
-    +'.tbl td{padding:8px 10px;border:1px solid #e5e7eb;text-align:center;}'
-    +'.descs{display:grid;grid-template-columns:1fr 1fr;gap:8px;}'
-    +'.conc{font-size:13px;color:#374151;line-height:1.8;white-space:pre-line;padding:16px;background:#f9fafb;border-radius:8px;border:1px solid #e5e7eb;}'
-    +'.footer{font-size:10px;color:#9ca3af;text-align:center;margin-top:16px;}'
+    +'.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;}'
+    +'.grid4{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px;margin-bottom:16px;}'
+    +'.sec{font-size:11px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;margin-top:16px;}'
+    +'table{width:100%;border-collapse:collapse;font-size:13px;}'
+    +'th{background:#f9fafb;padding:8px;border:1px solid #e5e7eb;font-size:11px;font-weight:700;}'
+    +'@media print{'
+    +'body{padding:16px;}'
+    +'.nobreak{page-break-inside:avoid;}'
+    +'canvas{max-width:100%!important;}'
+    +'}'
     +'</style></head><body>'
-    +'<button class="print-btn" onclick="window.print()">🖨 Print / Save as PDF</button>'
-    +'<div class="page">'
     +'<div class="hdr">'
-    +'<div style="font-size:9px;letter-spacing:2px;color:#9ca3af;text-transform:uppercase;margin-bottom:6px;">Athlete Performance Report</div>'
-    +'<div style="font-size:20px;font-weight:700;color:#fff;">'+d.name+'</div>'
-    +'<div style="font-size:12px;color:#d1d5db;margin-top:4px;">'+d.team+' &nbsp;·&nbsp; '+d.coach+'</div>'
-    +'<div style="font-size:10px;color:#6b7280;margin-top:4px;">'+d.date+'</div>'
+    +'<div style="font-size:10px;letter-spacing:2px;color:#9ca3af;text-transform:uppercase;margin-bottom:6px;">Athlete Performance Report</div>'
+    +'<div style="font-size:22px;font-weight:700;">'+name+'</div>'
+    +'<div style="font-size:13px;color:#d1d5db;margin-top:4px;">'+team+' &nbsp;·&nbsp; '+coach+'</div>'
+    +'<div style="font-size:11px;color:#6b7280;margin-top:4px;">'+dateStr+'</div>'
     +'</div>'
     +'<div class="sec">Score Summary</div>'
-    +'<div class="cards">'+cards+'</div>'
-    +'<div class="chart-wrap">'
-    +'<div style="font-size:10px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;">Score Trends Over Time</div>'
-    +'<div class="chart-box"><canvas id="ch"></canvas></div>'
-    +'<div style="font-size:10px;color:#9ca3af;font-style:italic;margin-top:8px;">* Lower = better performance</div>'
+    +'<div class="grid4 nobreak">'+cardsHtml+'</div>'
+    +'<div class="sec">Score Descriptions</div>'
+    +'<div class="grid2 nobreak">'+descHtml+'</div>'
+    +'<div class="sec">Score Trends Over Time</div>'
+    +'<div class="nobreak" style="background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:16px;margin-bottom:8px;">'
+    +'<canvas id="printChart" style="width:100%;height:280px;"></canvas>'
+    +'<div style="font-size:11px;color:#6b7280;margin-top:10px;">'+rangeHtml+'</div>'
     +'</div>'
     +'<div class="sec">Score Data</div>'
-    +'<table class="tbl"><thead><tr>'
-    +'<th style="text-align:left;">Period</th>'
-    +M.map(function(k){return '<th style="color:'+C[k]+';">'+k+'</th>';}).join('')
-    +'</tr></thead><tbody>'+trows+'</tbody></table>'
-    +'<div class="sec">Score Definitions</div>'
-    +'<div class="descs">'+descs+'</div>'
-    +'<div class="sec">Conclusions</div>'
-    +'<div class="conc">'+safeConc+'</div>'
-    +'<div class="footer">* All scores 0–100. Lower = better performance.</div>'
-    +'</div>'
+    +'<div class="nobreak" style="background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:16px;margin-bottom:16px;">'
+    +'<table><thead><tr><th style="text-align:left;">Period</th>'
+    +M.map(function(k){return '<th style="color:'+C[k]+';">'+ML[k]+' ('+k+')</th>';}).join('')
+    +'</tr></thead><tbody>'+trows+'</tbody></table></div>'
+    +(conc?'<div class="sec">Conclusions</div>'
+    +'<div class="nobreak" style="background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:16px;">'
+    +'<div style="font-size:14px;color:#374151;line-height:1.85;white-space:pre-line;">'+conc+'</div></div>':'')
     +'<script>'
+    +'window.onload=function(){'
     +'var D='+JSON.stringify(rows)+';'
     +'var C={PIS:"#ef4444",PSS:"#3b82f6",RAS:"#10b981",CPTS:"#f59e0b"};'
     +'var M=["PIS","PSS","RAS","CPTS"];'
-    +'new Chart(document.getElementById("ch").getContext("2d"),{'
-    +'type:"line",'
+    +'var ctx=document.getElementById("printChart").getContext("2d");'
+    +'new Chart(ctx,{type:"line",'
     +'data:{labels:D.map(function(d){return d.month;}),'
-    +'datasets:M.map(function(k){return{label:k,data:D.map(function(d){return d[k];}),borderColor:C[k],backgroundColor:C[k]+"22",borderWidth:2.5,pointRadius:5,pointHoverRadius:7,tension:0.35,fill:false};})},'
-    +'options:{responsive:true,maintainAspectRatio:false,'
-    +'plugins:{legend:{position:"bottom"},tooltip:{backgroundColor:"#111827",titleColor:"#f9fafb",bodyColor:"#d1d5db",padding:10,cornerRadius:8}},'
-    +'scales:{y:{min:0,max:100,grid:{color:"#f0f0f0"}},x:{grid:{color:"#f0f0f0"}}}}});'
+    +'datasets:M.map(function(k){return{label:k,data:D.map(function(d){return d[k];}),borderColor:C[k],backgroundColor:C[k]+"22",borderWidth:2.5,pointRadius:5,tension:0.35,fill:false};})},'
+    +'options:{responsive:false,animation:{duration:0},'
+    +'plugins:{legend:{position:"bottom"}},'
+    +'scales:{y:{min:0,max:100},x:{}}}});'
+    +'setTimeout(function(){window.print();},800);'
+    +'};'
     +'<\/script></body></html>';
 
   var w=window.open('','_blank');
-  w.document.write(printHTML);
+  w.document.open();
+  w.document.write(printContent);
   w.document.close();
 });
 
-function closePDF(){
-  document.getElementById('pdfOverlay').style.display='none';
-  document.body.style.overflow='';
-}
-
-// ── Build HTML for live link ──────────────────────────────────
 function buildHTML(){
-  var d=getDetails();
+  var name=document.getElementById('f_name').value||'Athlete Name';
+  var team=document.getElementById('f_team').value||'Team';
+  var coach=document.getElementById('f_coach').value||'Coach Name';
+  var conc=document.getElementById('f_conc').value||'';
+  var dval=document.getElementById('f_date').value;
+  var dateStr=dval?new Date(dval+'T00:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'}):new Date().toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'});
+
   var cards=M.map(function(k){
     var vals=rows.map(function(r){return r[k];});
     var last=vals[vals.length-1];
     var diff=last-vals[0];
     return '<div class="mc" id="c-'+k+'" onclick="tog(\''+k+'\')" style="border-color:'+C[k]+'">'
-      +'<div style="font-size:11px;font-weight:700;color:'+C[k]+';margin-bottom:4px;">'+k+'</div>'
+      +'<div style="font-size:12px;font-weight:700;color:'+C[k]+';margin-bottom:6px;">'+ML[k]+' ('+k+')</div>'
       +'<div style="font-size:26px;font-weight:700;color:#111827;">'+last+'</div>'
       +'<div style="font-size:12px;font-weight:600;color:'+(diff<0?'#16a34a':'#dc2626')+';">'+(diff>=0?'▲':'▼')+' '+Math.abs(diff)+' pts</div>'
       +'</div>';
   }).join('');
-  var trows=rows.map(function(r){
-    return '<tr><td style="padding:10px;border:1px solid #e5e7eb;font-weight:600;">'+r.month+'</td>'
-      +M.map(function(k){return '<td style="padding:10px;border:1px solid #e5e7eb;text-align:center;font-weight:600;color:'+C[k]+';">'+r[k]+'</td>';}).join('')+'</tr>';
-  }).join('');
+
   var descs=M.map(function(k){
     return '<div style="background:#fff;border-radius:10px;border:1px solid #e5e7eb;padding:14px;display:flex;gap:10px;">'
       +'<div style="width:3px;border-radius:4px;background:'+C[k]+';flex-shrink:0;"></div>'
-      +'<div><div style="font-size:10px;font-weight:700;color:'+C[k]+';text-transform:uppercase;">'+k+'</div>'
-      +'<div style="font-size:13px;font-weight:600;color:#111827;margin:2px 0;">'+ML[k]+'</div>'
-      +'<div style="font-size:11px;color:#6b7280;">'+MD[k]+'</div></div></div>';
+      +'<div><div style="font-size:11px;font-weight:700;color:'+C[k]+';text-transform:uppercase;">'+ML[k]+' ('+k+')</div>'
+      +'<div style="font-size:12px;color:#6b7280;margin-top:4px;">'+MD[k]+'</div></div></div>';
   }).join('');
-  var safeConc=(d.conc||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+  var trows=rows.map(function(r){
+    return '<tr><td style="padding:10px;border:1px solid #e5e7eb;font-weight:600;">'+r.month+'</td>'
+      +M.map(function(k){return '<td style="padding:10px;border:1px solid #e5e7eb;text-align:center;font-weight:600;color:'+C[k]+';">'+r[k]+'</td>';}).join('')
+      +'</tr>';
+  }).join('');
+
+  var rangeHtml=M.map(function(k){
+    return '<span style="display:inline-block;margin:4px 12px 4px 0;font-size:12px;">'
+      +'<span style="color:'+C[k]+';font-weight:700;">'+k+'</span>'
+      +' — best: <strong>0</strong> &nbsp;|&nbsp; worst: <strong>'+WORST[k]+'</strong></span>';
+  }).join('');
+
+  var safeConc=conc.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 
   return '<!DOCTYPE html><html lang="en"><head>'
     +'<meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/>'
     +'<title>Athlete Performance Report</title>'
     +'<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"><\/script>'
-    +'<style>*{box-sizing:border-box;margin:0;padding:0;}body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:#f9fafb;}'
-    +'.hdr{background:#111827;color:#fff;padding:24px 16px;}.lbl{font-size:10px;letter-spacing:2px;color:#9ca3af;text-transform:uppercase;margin-bottom:8px;}'
-    +'.hdr h1{font-size:22px;font-weight:700;}.hdr .sub{font-size:13px;color:#d1d5db;margin-top:5px;}.hdr .dt{font-size:11px;color:#6b7280;margin-top:5px;}'
+    +'<style>'
+    +'*{box-sizing:border-box;margin:0;padding:0;}'
+    +'body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:#f9fafb;}'
+    +'.hdr{background:#111827;color:#fff;padding:24px 16px;}'
+    +'.lbl{font-size:10px;letter-spacing:2px;color:#9ca3af;text-transform:uppercase;margin-bottom:8px;}'
+    +'.hdr h1{font-size:22px;font-weight:700;}'
+    +'.hdr .sub{font-size:13px;color:#d1d5db;margin-top:5px;}'
+    +'.hdr .dt{font-size:11px;color:#6b7280;margin-top:5px;}'
     +'.wrap{max-width:860px;margin:0 auto;padding:16px;}'
     +'.tbar{display:flex;gap:4px;background:#e5e7eb;border-radius:10px;padding:4px;margin-bottom:16px;}'
     +'.tbtn{flex:1;padding:10px 4px;border-radius:8px;border:none;cursor:pointer;font-size:13px;font-weight:500;background:transparent;color:#6b7280;-webkit-tap-highlight-color:transparent;}'
     +'.tbtn.on{background:#fff;color:#111827;box-shadow:0 1px 4px rgba(0,0,0,0.1);}'
     +'.tc{display:none;}.tc.on{display:block;}'
-    +'.mg{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;}@media(min-width:560px){.mg{grid-template-columns:repeat(4,1fr);}}'
-    +'.mc{background:#fff;border-radius:12px;padding:14px 12px;border:2px solid #e5e7eb;cursor:pointer;transition:opacity 0.2s;-webkit-tap-highlight-color:transparent;}.mc.off{opacity:0.35;}'
-    +'.cb{background:#fff;border-radius:12px;border:1px solid #e5e7eb;padding:20px;margin-bottom:16px;}'
+    +'.mg{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;}'
+    +'@media(min-width:560px){.mg{grid-template-columns:repeat(4,1fr);}}'
+    +'.mc{background:#fff;border-radius:12px;padding:14px 12px;border:2px solid #e5e7eb;cursor:pointer;transition:opacity 0.2s;-webkit-tap-highlight-color:transparent;}'
+    +'.mc.off{opacity:0.35;}'
+    +'.dg{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;}'
+    +'@media(min-width:560px){.dg{grid-template-columns:repeat(2,1fr);}}'
+    +'.cb{background:#fff;border-radius:12px;border:1px solid #e5e7eb;padding:20px;margin-bottom:8px;}'
     +'.cl{font-size:11px;font-weight:600;color:#9ca3af;text-transform:uppercase;letter-spacing:1px;margin-bottom:14px;}'
-    +'.cc{position:relative;width:100%;height:250px;}@media(min-width:600px){.cc{height:300px;}}'
-    +'.dg{display:grid;grid-template-columns:1fr 1fr;gap:10px;}@media(min-width:560px){.dg{grid-template-columns:repeat(4,1fr);}}'
-    +'.dtbl{width:100%;border-collapse:collapse;font-size:13px;}.dtbl th{padding:10px;border:1px solid #e5e7eb;background:#f9fafb;font-size:11px;font-weight:700;}.dtbl td{padding:10px;border:1px solid #e5e7eb;text-align:center;}'
+    +'.cc{position:relative;width:100%;height:250px;}'
+    +'@media(min-width:600px){.cc{height:300px;}}'
+    +'.range{font-size:12px;color:#6b7280;margin-top:12px;padding-top:10px;border-top:1px solid #f0f0f0;flex-wrap:wrap;}'
+    +'.dtbl{width:100%;border-collapse:collapse;font-size:13px;}'
+    +'.dtbl th{padding:10px;border:1px solid #e5e7eb;background:#f9fafb;font-size:11px;font-weight:700;}'
+    +'.dtbl td{padding:10px;border:1px solid #e5e7eb;text-align:center;}'
     +'</style></head><body>'
-    +'<div class="hdr"><div class="lbl">Athlete Performance Report</div><h1>'+d.name+'</h1>'
-    +'<div class="sub">'+d.team+' &nbsp;·&nbsp; '+d.coach+'</div><div class="dt">'+d.date+'</div></div>'
+    +'<div class="hdr"><div class="lbl">Athlete Performance Report</div>'
+    +'<h1>'+name+'</h1>'
+    +'<div class="sub">'+team+' &nbsp;·&nbsp; '+coach+'</div>'
+    +'<div class="dt">'+dateStr+'</div></div>'
     +'<div class="wrap">'
-    +'<div class="tbar"><button class="tbtn on" onclick="st(\'report\',this)">Report</button>'
+    +'<div class="tbar">'
+    +'<button class="tbtn on" onclick="st(\'report\',this)">Report</button>'
     +'<button class="tbtn" onclick="st(\'data\',this)">Data</button>'
-    +'<button class="tbtn" onclick="st(\'conc\',this)">✦ Conclusions</button></div>'
-    +'<div id="t-report" class="tc on"><div class="mg">'+cards+'</div>'
-    +'<div class="cb"><div class="cl">Score Trends Over Time</div><div class="cc"><canvas id="ch"></canvas></div>'
-    +'<div style="font-size:11px;color:#9ca3af;font-style:italic;margin-top:8px;">* Tap a card to toggle · Lower = better</div></div>'
-    +'<div class="dg">'+descs+'</div></div>'
-    +'<div id="t-data" class="tc"><div style="background:#fff;border-radius:12px;border:1px solid #e5e7eb;padding:16px;overflow-x:auto;">'
+    +'<button class="tbtn" onclick="st(\'conc\',this)">✦ Conclusions</button>'
+    +'</div>'
+    +'<div id="t-report" class="tc on">'
+    +'<div class="mg">'+cards+'</div>'
+    +'<div class="dg">'+descs+'</div>'
+    +'<div class="cb"><div class="cl">Score Trends Over Time</div>'
+    +'<div class="cc"><canvas id="ch"></canvas></div>'
+    +'<div class="range">'+rangeHtml+'</div>'
+    +'</div></div>'
+    +'<div id="t-data" class="tc">'
+    +'<div style="background:#fff;border-radius:12px;border:1px solid #e5e7eb;padding:16px;overflow-x:auto;">'
     +'<div style="font-size:11px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;">Score Data</div>'
     +'<table class="dtbl"><thead><tr><th style="text-align:left;">Period</th>'
     +M.map(function(k){return '<th style="color:'+C[k]+';">'+k+'</th>';}).join('')
     +'</tr></thead><tbody>'+trows+'</tbody></table>'
-    +'<div style="font-size:11px;color:#9ca3af;font-style:italic;margin-top:8px;">* Lower = better</div></div></div>'
-    +'<div id="t-conc" class="tc"><div style="background:#fff;border-radius:12px;border:1px solid #e5e7eb;padding:20px;">'
+    +'<div style="font-size:11px;color:#9ca3af;font-style:italic;margin-top:8px;">* Lower = better</div>'
+    +'</div></div>'
+    +'<div id="t-conc" class="tc">'
+    +'<div style="background:#fff;border-radius:12px;border:1px solid #e5e7eb;padding:20px;">'
     +'<div style="font-size:11px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:1px;margin-bottom:14px;">Conclusions</div>'
-    +'<div style="font-size:14px;color:#374151;line-height:1.85;white-space:pre-line;">'+safeConc+'</div></div></div></div>'
-    +'<script>var D='+JSON.stringify(rows)+';var C={PIS:"#ef4444",PSS:"#3b82f6",RAS:"#10b981",CPTS:"#f59e0b"};var M=["PIS","PSS","RAS","CPTS"];var vis={PIS:true,PSS:true,RAS:true,CPTS:true};'
-    +'var ch=new Chart(document.getElementById("ch").getContext("2d"),{type:"line",data:{labels:D.map(function(d){return d.month;}),datasets:M.map(function(k){return{label:k,data:D.map(function(d){return d[k];}),borderColor:C[k],backgroundColor:C[k]+"22",borderWidth:2.5,pointRadius:5,pointHoverRadius:7,tension:0.35,fill:false};})},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:"index",intersect:false},plugins:{legend:{display:false},tooltip:{backgroundColor:"#111827",titleColor:"#f9fafb",bodyColor:"#d1d5db",padding:12,cornerRadius:10,callbacks:{label:function(c){return" "+c.dataset.label+": "+c.parsed.y;}}}},scales:{y:{min:0,max:100,grid:{color:"#f0f0f0"}},x:{grid:{color:"#f0f0f0"}}}}});'
+    +'<div style="font-size:14px;color:#374151;line-height:1.85;white-space:pre-line;">'+safeConc+'</div>'
+    +'</div></div></div>'
+    +'<script>'
+    +'var D='+JSON.stringify(rows)+';'
+    +'var C={PIS:"#ef4444",PSS:"#3b82f6",RAS:"#10b981",CPTS:"#f59e0b"};'
+    +'var M=["PIS","PSS","RAS","CPTS"];'
+    +'var vis={PIS:true,PSS:true,RAS:true,CPTS:true};'
+    +'var ch=new Chart(document.getElementById("ch").getContext("2d"),{'
+    +'type:"line",'
+    +'data:{labels:D.map(function(d){return d.month;}),'
+    +'datasets:M.map(function(k){return{label:k,data:D.map(function(d){return d[k];}),borderColor:C[k],backgroundColor:C[k]+"22",borderWidth:2.5,pointRadius:5,pointHoverRadius:7,tension:0.35,fill:false};})},'
+    +'options:{responsive:true,maintainAspectRatio:false,'
+    +'interaction:{mode:"index",intersect:false},'
+    +'plugins:{legend:{display:false},'
+    +'tooltip:{backgroundColor:"#111827",titleColor:"#f9fafb",bodyColor:"#d1d5db",padding:12,cornerRadius:10,'
+    +'callbacks:{label:function(c){return" "+c.dataset.label+": "+c.parsed.y;}}}},'
+    +'scales:{y:{min:0,max:100,grid:{color:"#f0f0f0"}},x:{grid:{color:"#f0f0f0"}}}}});'
     +'function tog(k){vis[k]=!vis[k];document.getElementById("c-"+k).classList.toggle("off",!vis[k]);var ds=ch.data.datasets.find(function(d){return d.label===k;});if(ds){ds.hidden=!vis[k];ch.update();}}'
     +'function st(n,b){document.querySelectorAll(".tc").forEach(function(e){e.classList.remove("on");});document.querySelectorAll(".tbtn").forEach(function(e){e.classList.remove("on");});document.getElementById("t-"+n).classList.add("on");b.classList.add("on");}'
     +'<\/script></body></html>';
 }
 
-// ── Publish to GitHub ─────────────────────────────────────────
 async function publishToGitHub(){
   var token=localStorage.getItem('gh_token');
   var repo=localStorage.getItem('gh_repo');
@@ -496,7 +533,7 @@ async function publishToGitHub(){
     if(putRes.ok){showToast('✅ Published! Live in 1–2 mins.','ok');}
     else{var err=await putRes.json();showToast('❌ '+(err.message||'Error. Try again.'),'err');}
   }catch(e){showToast('❌ Network error. Check connection.','err');}
-  btn.disabled=false;btn.textContent='🚀 Publish to Client Report';
+  btn.disabled=false;btn.textContent='🚀 Publish';
 }
 
 document.getElementById('btnExp').addEventListener('click',publishToGitHub);
