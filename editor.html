@@ -31,7 +31,7 @@ td input{
   -webkit-appearance:none;outline:none;font-family:-apple-system,sans-serif;
 }
 td:first-child input{text-align:left;font-size:14px;}
-.pis{color:#ef4444;}.pss{color:#3b82f6;}.ras{color:#10b981;}.cpts{color:#f59e0b;}
+.pis{color:#ef4444;}.pss{color:#3b82f6;}.ras{color:#15803d;}.cpts{color:#f59e0b;}
 .btns{display:flex;gap:8px;margin-top:12px;}
 .badd{flex:1;padding:14px;background:#111827;color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700;}
 .brem{flex:1;padding:14px;background:#e5e7eb;color:#374151;border:none;border-radius:10px;font-size:15px;font-weight:700;}
@@ -41,11 +41,11 @@ td:first-child input{text-align:left;font-size:14px;}
 .bpdf{flex:1;padding:15px;background:#111827;color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:700;}
 .toast{position:fixed;top:20px;left:50%;transform:translateX(-50%);padding:12px 20px;border-radius:10px;font-size:14px;font-weight:600;opacity:0;transition:opacity 0.3s;z-index:999;pointer-events:none;white-space:nowrap;color:#fff;}
 .toast.show{opacity:1;}
-.toast.ok{background:#16a34a;}
+.toast.ok{background:#15803d;}
 .toast.err{background:#dc2626;}
 .toast.info{background:#111827;}
 .token-status{font-size:12px;margin-top:8px;padding:8px 10px;border-radius:6px;}
-.token-ok{background:#f0fdf4;color:#16a34a;border:1px solid #bbf7d0;}
+.token-ok{background:#f0fdf4;color:#15803d;border:1px solid #bbf7d0;}
 .token-missing{background:#fff7ed;color:#ea580c;border:1px solid #fed7aa;}
 .btn-save-token{margin-top:8px;padding:10px 16px;background:#111827;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;}
 .btn-clear-token{margin-top:8px;margin-left:8px;padding:10px 16px;background:#fee2e2;color:#dc2626;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;display:none;}
@@ -55,7 +55,6 @@ td:first-child input{text-align:left;font-size:14px;}
 
 <h1>⚙️ Athlete Report Editor<span>Edit below — tap Publish to update the client report instantly</span></h1>
 
-<!-- GitHub Settings -->
 <div class="card">
   <h2>⚙️ GitHub Settings (One time setup)</h2>
   <label>GitHub Personal Access Token</label>
@@ -67,7 +66,6 @@ td:first-child input{text-align:left;font-size:14px;}
   <input type="text" id="f_repo" placeholder="e.g. athlete-report" autocorrect="off" spellcheck="false"/>
 </div>
 
-<!-- Athlete Details -->
 <div class="card">
   <h2>Athlete Details</h2>
   <label>Athlete Name</label>
@@ -80,7 +78,6 @@ td:first-child input{text-align:left;font-size:14px;}
   <input type="date" id="f_date"/>
 </div>
 
-<!-- Score Data -->
 <div class="card">
   <h2>Score Data (0–100, lower is better)</h2>
   <div style="overflow-x:auto;">
@@ -103,7 +100,6 @@ td:first-child input{text-align:left;font-size:14px;}
   </div>
 </div>
 
-<!-- Conclusions -->
 <div class="card">
   <h2>Conclusions</h2>
   <textarea id="f_conc" placeholder="Write your conclusions here..."></textarea>
@@ -118,16 +114,15 @@ td:first-child input{text-align:left;font-size:14px;}
 
 <script>
 var GITHUB_USER='athleteperformancereport';
-
-var C={PIS:'#ef4444',PSS:'#3b82f6',RAS:'#10b981',CPTS:'#f59e0b'};
+var C={PIS:'#ef4444',PSS:'#3b82f6',RAS:'#15803d',CPTS:'#f59e0b'};
 var ML={PIS:'Performance Interference Score',PSS:'Pressure Stability Score',RAS:'Role Alignment Score',CPTS:'Coach Performance Trust Score'};
 var MD={
   PIS:'Measures subconscious interference such as hesitation, overthinking, confidence fluctuation and mental noise. Lower is better.',
   PSS:'Measures how athletes handle pressure, mistakes, and turnovers. Lower is better.',
-  RAS:"Measures an athlete's resistance with role assessment. Lower is better.",
+  RAS:"Measures an athlete's resistance with role assignment. Lower is better.",
   CPTS:'Measures how much trust the Coach has in an athlete under pressure. Lower is better.'
 };
-var WORST={PIS:80,PSS:60,RAS:60,CPTS:60};
+var RANGE={PIS:'0–80',PSS:'0–60',RAS:'0–60',CPTS:'0–60'};
 var M=['PIS','PSS','RAS','CPTS'];
 
 var rows=[
@@ -262,7 +257,69 @@ document.getElementById('btnRem').addEventListener('click',function(){
   document.getElementById(id).addEventListener('input',save);
 });
 
-// ── Build the client report HTML ──────────────────────────────
+// ── Shared HTML builders ──────────────────────────────────────
+function buildCards(){
+  return M.map(function(k){
+    var vals=rows.map(function(r){return r[k];});
+    var last=vals[vals.length-1];
+    var diff=last-vals[0];
+    return '<div class="mc" id="c-'+k+'" onclick="tog(\''+k+'\')" style="border-color:'+C[k]+';background:#fff;border-radius:12px;padding:14px 12px;border:2px solid;cursor:pointer;transition:opacity 0.2s;text-align:center;-webkit-tap-highlight-color:transparent;">'
+      +'<div style="font-size:12px;font-weight:700;color:'+C[k]+';margin-bottom:6px;line-height:1.4;">'+ML[k]+'<br/><span style="font-size:11px;opacity:0.8;">('+k+')</span></div>'
+      +'<div style="font-size:28px;font-weight:800;color:#111827;margin-bottom:4px;">'+last+'</div>'
+      +'<div style="font-size:12px;font-weight:600;color:'+(diff<0?'#15803d':'#dc2626')+';">'+(diff>=0?'▲':'▼')+' '+Math.abs(diff)+' pts</div>'
+      +'</div>';
+  }).join('');
+}
+
+function buildDescs(){
+  return M.map(function(k){
+    return '<div style="background:#fff;border-radius:10px;border:1px solid #e5e7eb;padding:14px;display:flex;gap:10px;">'
+      +'<div style="width:3px;border-radius:4px;background:'+C[k]+';flex-shrink:0;margin-top:2px;"></div>'
+      +'<div>'
+      +'<div style="font-size:12px;font-weight:700;color:'+C[k]+';margin-bottom:3px;">'+ML[k]+' ('+k+')</div>'
+      +'<div style="font-size:12px;color:#6b7280;line-height:1.5;">'+MD[k]+'</div>'
+      +'</div></div>';
+  }).join('');
+}
+
+function buildRange(){
+  return '<div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;padding-top:10px;border-top:1px solid #f0f0f0;">'
+    +M.map(function(k){
+      return '<div style="font-size:11px;color:#6b7280;background:#f9fafb;padding:5px 10px;border-radius:6px;border:1px solid #e5e7eb;">'
+        +'<span style="color:'+C[k]+';font-weight:700;">'+k+' Range:</span> '+RANGE[k]
+        +'</div>';
+    }).join('')
+    +'</div>';
+}
+
+function buildTableRows(){
+  return rows.map(function(r){
+    return '<tr><td style="padding:10px;border:1px solid #e5e7eb;font-weight:600;white-space:nowrap;">'+r.month+'</td>'
+      +M.map(function(k){return '<td style="padding:10px;border:1px solid #e5e7eb;text-align:center;font-weight:600;color:'+C[k]+';">'+r[k]+'</td>';}).join('')
+      +'</tr>';
+  }).join('');
+}
+
+function buildChartScript(canvasId){
+  return 'var D='+JSON.stringify(rows)+';'
+    +'var CV={PIS:"#ef4444",PSS:"#3b82f6",RAS:"#15803d",CPTS:"#f59e0b"};'
+    +'var M=["PIS","PSS","RAS","CPTS"];'
+    +'var vis={PIS:true,PSS:true,RAS:true,CPTS:true};'
+    +'var ch=new Chart(document.getElementById("'+canvasId+'").getContext("2d"),{'
+    +'type:"line",'
+    +'data:{labels:D.map(function(d){return d.month;}),'
+    +'datasets:M.map(function(k){return{label:k,data:D.map(function(d){return d[k];}),borderColor:CV[k],backgroundColor:CV[k]+"22",borderWidth:2.5,pointRadius:5,pointHoverRadius:7,tension:0.35,fill:false};})},'
+    +'options:{responsive:true,maintainAspectRatio:false,'
+    +'interaction:{mode:"index",intersect:false},'
+    +'plugins:{legend:{display:false},'
+    +'tooltip:{backgroundColor:"#111827",titleColor:"#f9fafb",bodyColor:"#d1d5db",padding:12,cornerRadius:10,'
+    +'callbacks:{label:function(c){return" "+c.dataset.label+": "+c.parsed.y;}}}},'
+    +'scales:{y:{min:0,max:100,grid:{color:"#f0f0f0"}},x:{grid:{color:"#f0f0f0"}}}}});'
+    +'function tog(k){vis[k]=!vis[k];document.getElementById("c-"+k).classList.toggle("off",!vis[k]);var ds=ch.data.datasets.find(function(d){return d.label===k;});if(ds){ds.hidden=!vis[k];ch.update();}}'
+    +'function st(n,b){document.querySelectorAll(".tc").forEach(function(e){e.classList.remove("on");});document.querySelectorAll(".tbtn").forEach(function(e){e.classList.remove("on");});document.getElementById("t-"+n).classList.add("on");b.classList.add("on");}';
+}
+
+// ── Build client report HTML ──────────────────────────────────
 function buildHTML(){
   var name=document.getElementById('f_name').value||'Athlete Name';
   var team=document.getElementById('f_team').value||'Team';
@@ -270,45 +327,6 @@ function buildHTML(){
   var conc=document.getElementById('f_conc').value||'';
   var dval=document.getElementById('f_date').value;
   var dateStr=dval?new Date(dval+'T00:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'}):new Date().toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'});
-
-  // Score cards — full name on top, score below
-  var cards=M.map(function(k){
-    var vals=rows.map(function(r){return r[k];});
-    var last=vals[vals.length-1];
-    var diff=last-vals[0];
-    return '<div class="mc" id="c-'+k+'" onclick="tog(\''+k+'\')" style="border-color:'+C[k]+'">'
-      +'<div style="font-size:12px;font-weight:700;color:'+C[k]+';margin-bottom:8px;line-height:1.4;">'+ML[k]+'<br/><span style="font-size:11px;opacity:0.8;">('+k+')</span></div>'
-      +'<div style="font-size:28px;font-weight:800;color:#111827;margin-bottom:4px;">'+last+'</div>'
-      +'<div style="font-size:12px;font-weight:600;color:'+(diff<0?'#16a34a':'#dc2626')+';">'+(diff>=0?'▲':'▼')+' '+Math.abs(diff)+' pts</div>'
-      +'</div>';
-  }).join('');
-
-  // Descriptions — below the score cards, updated text
-  var descs=M.map(function(k){
-    return '<div style="background:#fff;border-radius:10px;border:1px solid #e5e7eb;padding:14px;display:flex;gap:10px;">'
-      +'<div style="width:3px;border-radius:4px;background:'+C[k]+';flex-shrink:0;margin-top:2px;"></div>'
-      +'<div>'
-      +'<div style="font-size:12px;font-weight:700;color:'+C[k]+';margin-bottom:2px;">'+ML[k]+' ('+k+')</div>'
-      +'<div style="font-size:12px;color:#6b7280;line-height:1.5;">'+MD[k]+'</div>'
-      +'</div></div>';
-  }).join('');
-
-  // Score range below graph
-  var rangeHtml='<div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;padding-top:10px;border-top:1px solid #f0f0f0;">'
-    +M.map(function(k){
-      return '<div style="font-size:11px;color:#6b7280;background:#f9fafb;padding:5px 10px;border-radius:6px;border:1px solid #e5e7eb;">'
-        +'<span style="color:'+C[k]+';font-weight:700;">'+k+'</span>'
-        +' &nbsp;Best: <strong>0</strong> &nbsp;|&nbsp; Worst: <strong>'+WORST[k]+'</strong>'
-        +'</div>';
-    }).join('')
-    +'</div>';
-
-  var trows=rows.map(function(r){
-    return '<tr><td style="padding:10px;border:1px solid #e5e7eb;font-weight:600;">'+r.month+'</td>'
-      +M.map(function(k){return '<td style="padding:10px;border:1px solid #e5e7eb;text-align:center;font-weight:600;color:'+C[k]+';">'+r[k]+'</td>';}).join('')
-      +'</tr>';
-  }).join('');
-
   var safeConc=conc.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 
   return '<!DOCTYPE html><html lang="en"><head>'
@@ -321,8 +339,8 @@ function buildHTML(){
     +'.hdr{background:#111827;color:#fff;padding:24px 16px;}'
     +'.lbl{font-size:10px;letter-spacing:2px;color:#9ca3af;text-transform:uppercase;margin-bottom:8px;}'
     +'.hdr h1{font-size:22px;font-weight:700;}'
-    +'.hdr .sub{font-size:13px;color:#d1d5db;margin-top:5px;}'
-    +'.hdr .dt{font-size:11px;color:#6b7280;margin-top:5px;}'
+    +'.sub{font-size:13px;color:#d1d5db;margin-top:5px;}'
+    +'.dt{font-size:11px;color:#6b7280;margin-top:5px;}'
     +'.wrap{max-width:860px;margin:0 auto;padding:16px;}'
     +'.tbar{display:flex;gap:4px;background:#e5e7eb;border-radius:10px;padding:4px;margin-bottom:16px;}'
     +'.tbtn{flex:1;padding:10px 4px;border-radius:8px;border:none;cursor:pointer;font-size:13px;font-weight:500;background:transparent;color:#6b7280;-webkit-tap-highlight-color:transparent;}'
@@ -332,12 +350,12 @@ function buildHTML(){
     +'@media(min-width:560px){.mg{grid-template-columns:repeat(4,1fr);}}'
     +'.mc{background:#fff;border-radius:12px;padding:14px 12px;border:2px solid #e5e7eb;cursor:pointer;transition:opacity 0.2s;-webkit-tap-highlight-color:transparent;text-align:center;}'
     +'.mc.off{opacity:0.35;}'
-    +'.dg{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;}'
-    +'@media(min-width:560px){.dg{grid-template-columns:repeat(2,1fr);}}'
     +'.cb{background:#fff;border-radius:12px;border:1px solid #e5e7eb;padding:20px;margin-bottom:16px;}'
-    +'.cl{font-size:11px;font-weight:600;color:#9ca3af;text-transform:uppercase;letter-spacing:1px;margin-bottom:14px;}'
+    +'.cl{font-size:11px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:1px;margin-bottom:14px;}'
     +'.cc{position:relative;width:100%;height:250px;}'
     +'@media(min-width:600px){.cc{height:300px;}}'
+    +'.dg{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;}'
+    +'@media(min-width:560px){.dg{grid-template-columns:repeat(2,1fr);}}'
     +'.dtbl{width:100%;border-collapse:collapse;font-size:13px;}'
     +'.dtbl th{padding:10px;border:1px solid #e5e7eb;background:#f9fafb;font-size:11px;font-weight:700;}'
     +'.dtbl td{padding:10px;border:1px solid #e5e7eb;text-align:center;}'
@@ -352,59 +370,37 @@ function buildHTML(){
     +'<button class="tbtn" onclick="st(\'data\',this)">Data</button>'
     +'<button class="tbtn" onclick="st(\'conc\',this)">✦ Conclusions</button>'
     +'</div>'
-
     // REPORT TAB
     +'<div id="t-report" class="tc on">'
-    // Score cards
-    +'<div class="mg">'+cards+'</div>'
-    // Descriptions below cards
-    +'<div class="dg">'+descs+'</div>'
-    // Chart
+    +'<div class="mg">'+buildCards()+'</div>'
     +'<div class="cb">'
-    +'<div class="cl">Score Trends Over Time</div>'
+    +'<div class="cl">Score Trends Over Time (the closer to 0 the better)</div>'
     +'<div class="cc"><canvas id="ch"></canvas></div>'
-    // Score range below chart
-    +rangeHtml
-    +'</div></div>'
-
+    +buildRange()
+    +'</div>'
+    +'<div class="dg">'+buildDescs()+'</div>'
+    +'</div>'
     // DATA TAB
     +'<div id="t-data" class="tc">'
     +'<div style="background:#fff;border-radius:12px;border:1px solid #e5e7eb;padding:16px;overflow-x:auto;">'
     +'<div style="font-size:11px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;">Score Data</div>'
-    +'<table class="dtbl"><thead><tr><th style="text-align:left;">Period</th>'
+    +'<table class="dtbl"><thead><tr>'
+    +'<th style="text-align:left;min-width:160px;">Period</th>'
     +M.map(function(k){return '<th style="color:'+C[k]+';">'+k+'</th>';}).join('')
-    +'</tr></thead><tbody>'+trows+'</tbody></table>'
+    +'</tr></thead><tbody>'+buildTableRows()+'</tbody></table>'
     +'<div style="font-size:11px;color:#9ca3af;font-style:italic;margin-top:8px;">* Lower = better</div>'
     +'</div></div>'
-
     // CONCLUSIONS TAB
     +'<div id="t-conc" class="tc">'
     +'<div style="background:#fff;border-radius:12px;border:1px solid #e5e7eb;padding:20px;">'
     +'<div style="font-size:11px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:1px;margin-bottom:14px;">Conclusions</div>'
     +'<div style="font-size:14px;color:#374151;line-height:1.85;white-space:pre-line;">'+safeConc+'</div>'
     +'</div></div></div>'
-
-    +'<script>'
-    +'var D='+JSON.stringify(rows)+';'
-    +'var C={PIS:"#ef4444",PSS:"#3b82f6",RAS:"#10b981",CPTS:"#f59e0b"};'
-    +'var M=["PIS","PSS","RAS","CPTS"];'
-    +'var vis={PIS:true,PSS:true,RAS:true,CPTS:true};'
-    +'var ch=new Chart(document.getElementById("ch").getContext("2d"),{'
-    +'type:"line",'
-    +'data:{labels:D.map(function(d){return d.month;}),'
-    +'datasets:M.map(function(k){return{label:k,data:D.map(function(d){return d[k];}),borderColor:C[k],backgroundColor:C[k]+"22",borderWidth:2.5,pointRadius:5,pointHoverRadius:7,tension:0.35,fill:false};})},'
-    +'options:{responsive:true,maintainAspectRatio:false,'
-    +'interaction:{mode:"index",intersect:false},'
-    +'plugins:{legend:{display:false},'
-    +'tooltip:{backgroundColor:"#111827",titleColor:"#f9fafb",bodyColor:"#d1d5db",padding:12,cornerRadius:10,'
-    +'callbacks:{label:function(c){return" "+c.dataset.label+": "+c.parsed.y;}}}},'
-    +'scales:{y:{min:0,max:100,grid:{color:"#f0f0f0"}},x:{grid:{color:"#f0f0f0"}}}}});'
-    +'function tog(k){vis[k]=!vis[k];document.getElementById("c-"+k).classList.toggle("off",!vis[k]);var ds=ch.data.datasets.find(function(d){return d.label===k;});if(ds){ds.hidden=!vis[k];ch.update();}}'
-    +'function st(n,b){document.querySelectorAll(".tc").forEach(function(e){e.classList.remove("on");});document.querySelectorAll(".tbtn").forEach(function(e){e.classList.remove("on");});document.getElementById("t-"+n).classList.add("on");b.classList.add("on");}'
-    +'<\/script></body></html>';
+    +'<script>'+buildChartScript('ch')+'<\/script>'
+    +'</body></html>';
 }
 
-// ── PDF Print ─────────────────────────────────────────────────
+// ── PDF ───────────────────────────────────────────────────────
 document.getElementById('btnPdf').addEventListener('click',function(){
   var name=document.getElementById('f_name').value||'Athlete Name';
   var team=document.getElementById('f_team').value||'Team';
@@ -420,7 +416,7 @@ document.getElementById('btnPdf').addEventListener('click',function(){
     return '<div style="background:#fff;border:2px solid '+C[k]+';border-radius:10px;padding:12px;text-align:center;">'
       +'<div style="font-size:12px;font-weight:700;color:'+C[k]+';margin-bottom:6px;line-height:1.4;">'+ML[k]+'<br/>('+k+')</div>'
       +'<div style="font-size:26px;font-weight:800;color:#111827;margin-bottom:4px;">'+last+'</div>'
-      +'<div style="font-size:12px;font-weight:600;color:'+(diff<0?'#16a34a':'#dc2626')+';">'+(diff>=0?'▲':'▼')+' '+Math.abs(diff)+' pts</div>'
+      +'<div style="font-size:12px;font-weight:600;color:'+(diff<0?'#15803d':'#dc2626')+';">'+(diff>=0?'▲':'▼')+' '+Math.abs(diff)+' pts</div>'
       +'</div>';
   }).join('');
 
@@ -431,16 +427,15 @@ document.getElementById('btnPdf').addEventListener('click',function(){
       +'<div style="font-size:11px;color:#6b7280;line-height:1.5;">'+MD[k]+'</div></div></div>';
   }).join('');
 
-  var trows=rows.map(function(r){
-    return '<tr><td style="padding:8px;border:1px solid #e5e7eb;font-weight:600;">'+r.month+'</td>'
-      +M.map(function(k){return '<td style="padding:8px;border:1px solid #e5e7eb;text-align:center;font-weight:600;color:'+C[k]+';">'+r[k]+'</td>';}).join('')
-      +'</tr>';
+  var rangeHtml=M.map(function(k){
+    return '<span style="display:inline-block;margin:3px 8px 3px 0;font-size:11px;background:#f9fafb;padding:4px 8px;border-radius:5px;border:1px solid #e5e7eb;">'
+      +'<span style="color:'+C[k]+';font-weight:700;">'+k+' Range:</span> '+RANGE[k]+'</span>';
   }).join('');
 
-  var rangeHtml=M.map(function(k){
-    return '<span style="display:inline-block;margin:3px 10px 3px 0;font-size:11px;background:#f9fafb;padding:4px 8px;border-radius:5px;border:1px solid #e5e7eb;">'
-      +'<span style="color:'+C[k]+';font-weight:700;">'+k+'</span>'
-      +' — Best: <strong>0</strong> | Worst: <strong>'+WORST[k]+'</strong></span>';
+  var trows=rows.map(function(r){
+    return '<tr><td style="padding:8px 10px;border:1px solid #e5e7eb;font-weight:600;white-space:nowrap;min-width:160px;">'+r.month+'</td>'
+      +M.map(function(k){return '<td style="padding:8px;border:1px solid #e5e7eb;text-align:center;font-weight:600;color:'+C[k]+';">'+r[k]+'</td>';}).join('')
+      +'</tr>';
   }).join('');
 
   var printContent='<!DOCTYPE html><html><head>'
@@ -456,7 +451,10 @@ document.getElementById('btnPdf').addEventListener('click',function(){
     +'.grid2{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:14px;}'
     +'table{width:100%;border-collapse:collapse;font-size:12px;}'
     +'th{background:#f9fafb;padding:8px;border:1px solid #e5e7eb;font-size:11px;}'
-    +'@media print{.nobreak{page-break-inside:avoid;}}'
+    +'@media print{'
+    +'.nobreak{page-break-inside:avoid;}'
+    +'body{padding:12px;}'
+    +'}'
     +'</style></head><body>'
     +'<div class="hdr">'
     +'<div style="font-size:10px;letter-spacing:2px;color:#9ca3af;text-transform:uppercase;margin-bottom:6px;">Athlete Performance Report</div>'
@@ -466,16 +464,17 @@ document.getElementById('btnPdf').addEventListener('click',function(){
     +'</div>'
     +'<div class="sec">Score Summary</div>'
     +'<div class="grid4 nobreak">'+cards+'</div>'
-    +'<div class="sec">Score Descriptions</div>'
-    +'<div class="grid2 nobreak">'+descs+'</div>'
-    +'<div class="sec">Score Trends Over Time</div>'
+    +'<div class="sec">Score Trends Over Time (the closer to 0 the better)</div>'
     +'<div class="nobreak" style="border:1px solid #e5e7eb;border-radius:10px;padding:16px;margin-bottom:14px;">'
-    +'<canvas id="pc" width="720" height="280"></canvas>'
+    +'<canvas id="pc" width="720" height="260" style="width:100%;"></canvas>'
     +'<div style="margin-top:10px;">'+rangeHtml+'</div>'
     +'</div>'
+    +'<div class="sec">Score Descriptions</div>'
+    +'<div class="grid2 nobreak">'+descs+'</div>'
     +'<div class="sec">Score Data</div>'
     +'<div class="nobreak" style="border:1px solid #e5e7eb;border-radius:10px;padding:14px;margin-bottom:14px;">'
-    +'<table><thead><tr><th style="text-align:left;">Period</th>'
+    +'<table><thead><tr>'
+    +'<th style="text-align:left;min-width:160px;">Period</th>'
     +M.map(function(k){return '<th style="color:'+C[k]+';">'+ML[k]+' ('+k+')</th>';}).join('')
     +'</tr></thead><tbody>'+trows+'</tbody></table></div>'
     +(conc?'<div class="sec">Conclusions</div>'
@@ -484,14 +483,14 @@ document.getElementById('btnPdf').addEventListener('click',function(){
     +'<script>'
     +'window.addEventListener("load",function(){'
     +'var D='+JSON.stringify(rows)+';'
-    +'var C={PIS:"#ef4444",PSS:"#3b82f6",RAS:"#10b981",CPTS:"#f59e0b"};'
+    +'var CV={PIS:"#ef4444",PSS:"#3b82f6",RAS:"#15803d",CPTS:"#f59e0b"};'
     +'var M=["PIS","PSS","RAS","CPTS"];'
     +'new Chart(document.getElementById("pc"),{'
     +'type:"line",'
     +'data:{labels:D.map(function(d){return d.month;}),'
-    +'datasets:M.map(function(k){return{label:k,data:D.map(function(d){return d[k];}),borderColor:C[k],backgroundColor:"transparent",borderWidth:2.5,pointRadius:4,tension:0.35};})},'
-    +'options:{responsive:false,animation:{duration:0,onComplete:function(){setTimeout(function(){window.print();},300);}},'
-    +'plugins:{legend:{position:"bottom"}},'
+    +'datasets:M.map(function(k){return{label:k,data:D.map(function(d){return d[k];}),borderColor:CV[k],backgroundColor:"transparent",borderWidth:2.5,pointRadius:4,tension:0.35};})},'
+    +'options:{responsive:false,animation:{duration:0},'
+    +'plugins:{legend:{display:false}},'
     +'scales:{y:{min:0,max:100},x:{}}}});'
     +'});'
     +'<\/script></body></html>';
