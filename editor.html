@@ -374,7 +374,7 @@ function buildHTML(){
     +'<div id="t-report" class="tc on">'
     +'<div class="mg">'+buildCards()+'</div>'
     +'<div class="cb">'
-    +'<div class="cl">Score Trends Over Time (the closer to 0 the better)</div>'
+    +'<div class="cl"><strong>Score Trends Over Time</strong> <span style="font-weight:400;">(the closer to 0 the better)</span></div>'
     +'<div class="cc"><canvas id="ch"></canvas></div>'
     +buildRange()
     +'</div>'
@@ -464,7 +464,7 @@ document.getElementById('btnPdf').addEventListener('click',function(){
     +'</div>'
     +'<div class="sec">Score Summary</div>'
     +'<div class="grid4 nobreak">'+cards+'</div>'
-    +'<div class="sec">Score Trends Over Time (the closer to 0 the better)</div>'
+    +'<div class="sec"><strong>Score Trends Over Time</strong> <span style="font-weight:400;">(the closer to 0 the better)</span></div>'
     +'<div class="nobreak" style="border:1px solid #e5e7eb;border-radius:10px;padding:16px;margin-bottom:14px;">'
     +'<canvas id="pc" width="720" height="260" style="width:100%;"></canvas>'
     +'<div style="margin-top:10px;">'+rangeHtml+'</div>'
